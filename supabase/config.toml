@@ -1,0 +1,11 @@
+# Minimal Supabase CLI config so `supabase functions deploy` works without
+# needing to run `supabase init` (which could otherwise prompt about the
+# already-existing supabase/ folder). project_id is just a local label used
+# for Docker container naming during local dev — it doesn't need to match
+# the hosted project ref, which is passed explicitly via --project-ref.
+project_id = "naresh-jewellers-app"
+
+[functions.sync-rates]
+# Requests must carry a valid Supabase JWT (anon or service_role key) in the
+# Authorization header — matches how cron.sql invokes it with the anon key.
+verify_jwt = true
