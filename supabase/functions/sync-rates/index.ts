@@ -71,12 +71,17 @@ Deno.serve(async (_req) => {
   try {
     const { data: settings, error: settingsErr } = await supabase
       .from("settings")
-      .select("local_margin_pct")
+      .select("gold_margin_pct, silver_margin_pct")
       .eq("id", 1)
       .single();
     if (settingsErr) throw new Error(`Could not read settings: ${settingsErr.message}`);
 
-    const margin = 1 + Number(settings?.local_margin_pct ?? 0);
+    // Gold and silver get separate margins because the gap between GoldAPI's raw
+    // international spot price and the local India retail rate (import duty + GST +
+    // dealer margin) differs meaningfully between the two metals — see
+    // supabase/schema.sql for how these were calibrated against a local reference rate.
+    const goldMargin = 1 + Number(settings?.gold_margin_pct ?? 0);
+    const silverMargin = 1 + Number(settings?.silver_margin_pct ?? 0);
 
     const [gold, silver] = await Promise.all([
       fetchMetal(GOLD_URL, goldApiKey),
@@ -84,11 +89,11 @@ Deno.serve(async (_req) => {
     ]);
 
     const rates: Record<Purity, number> = {
-      "24K": round2(gold.price_gram_24k * margin),
-      "22K": round2(gold.price_gram_22k * margin),
-      "18K": round2(gold.price_gram_18k * margin),
-      "14K": round2(gold.price_gram_14k * margin),
-      Silver: round2(silver.price_gram_24k * margin),
+      "24K": round2(gold.price_gram_24k * goldMargin),
+      "22K": round2(gold.price_gram_22k * goldMargin),
+      "18K": round2(gold.price_gram_18k * goldMargin),
+      "14K": round2(gold.price_gram_14k * goldMargin),
+      Silver: round2(silver.price_gram_24k * silverMargin),
     };
 
     const now = new Date().toISOString();
