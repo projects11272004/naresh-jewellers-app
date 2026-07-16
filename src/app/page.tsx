@@ -10,6 +10,8 @@ import RateHistoryTable from "@/components/RateHistoryTable";
 import UpdateRateForm from "@/components/UpdateRateForm";
 import { formatDateTime } from "@/lib/format";
 
+export const dynamic = "force-dynamic";
+
 const PURITY_ORDER = ["24K", "22K", "18K", "14K", "Silver"];
 const REFRESH_INTERVAL_MS = 60_000;
 
