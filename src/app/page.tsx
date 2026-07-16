@@ -83,13 +83,27 @@ export default function RateMasterPage() {
     if (!user) return;
     setUserEmail(user.email ?? null);
 
-    const { data: profileRows } = await supabase
+    const { data: profileRows, error: profileErr } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .returns<{ role: UserRole }[]>();
 
-    setUserRole(profileRows?.[0]?.role ?? "employee");
+    if (profileErr) {
+      setError(`Could not load your role: ${profileErr.message}`);
+      setUserRole("employee");
+      return;
+    }
+
+    if (!profileRows || profileRows.length === 0) {
+      setError(
+        "No profile row found for your account - your role check defaulted to employee."
+      );
+      setUserRole("employee");
+      return;
+    }
+
+    setUserRole(profileRows[0].role);
   }, [supabase]);
 
   useEffect(() => {
