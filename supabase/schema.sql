@@ -47,10 +47,18 @@ alter table current_rates enable row level security;
 alter table rate_log enable row level security;
 alter table settings enable row level security;
 
--- Public (anon key) can read current + historical rates — needed for the
--- dashboard to load without requiring a logged-in session in Phase 1.
-create policy "Public can view current rates" on current_rates for select using (true);
-create policy "Public can view rate history" on rate_log for select using (true);
+-- Every page in this app requires a logged-in account (see supabase/migrations/
+-- 002_add_auth_roles.sql for the profiles table, auto-provisioning trigger, and
+-- the admin-only write policies) — there is no public/anon read access here.
+create policy "Authenticated users can view current rates" on current_rates
+  for select using (auth.uid() is not null);
+create policy "Authenticated users can view rate history" on rate_log
+  for select using (auth.uid() is not null);
 
 -- settings has no public policy on purpose — locked to service-role-only
 -- access (used later by the Edge Function that runs the daily rate sync).
+
+-- See supabase/migrations/002_add_auth_roles.sql for: the profiles table,
+-- the new-user trigger, and the admin-only update/insert policies on
+-- current_rates/rate_log. Run that migration right after this file on a
+-- fresh project.

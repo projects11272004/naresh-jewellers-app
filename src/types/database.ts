@@ -31,6 +31,15 @@ export interface SettingsRow {
   last_sync_time: string | null;
 }
 
+export type UserRole = "admin" | "employee";
+
+export interface ProfileRow {
+  id: string; // matches auth.users.id
+  role: UserRole;
+  full_name: string | null;
+  created_at: string;
+}
+
 // Minimal Database shape for the supabase-js generic client typing, matching the
 // structure produced by `supabase gen types typescript` (Row/Insert/Update/Relationships
 // per table) so the postgrest-js generics resolve correctly instead of falling back to `never`.
@@ -54,6 +63,12 @@ export interface Database {
         Row: SettingsRow;
         Insert: Partial<SettingsRow>;
         Update: Partial<SettingsRow>;
+        Relationships: [];
+      };
+      profiles: {
+        Row: ProfileRow;
+        Insert: Partial<ProfileRow>;
+        Update: Partial<ProfileRow>;
         Relationships: [];
       };
     };

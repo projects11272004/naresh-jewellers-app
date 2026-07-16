@@ -1,22 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import type { CurrentRateRow, RateLogRow } from "@/types/database";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import type { CurrentRateRow, RateLogRow, UserRole } from "@/types/database";
 import Header from "@/components/Header";
 import RateCard from "@/components/RateCard";
 import RateHistoryTable from "@/components/RateHistoryTable";
+import UpdateRateForm from "@/components/UpdateRateForm";
 import { formatDateTime } from "@/lib/format";
 
 const PURITY_ORDER = ["24K", "22K", "18K", "14K", "Silver"];
 const REFRESH_INTERVAL_MS = 60_000;
 
 export default function RateMasterPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
   const [currentRates, setCurrentRates] = useState<CurrentRateRow[]>([]);
   const [history, setHistory] = useState<RateLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
+
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   const loadCurrentRates = useCallback(async () => {
     const { data, error: err } = await supabase
@@ -42,7 +50,7 @@ export default function RateMasterPage() {
       );
       setLastSynced(latest.updated_on);
     }
-  }, []);
+  }, [supabase]);
 
   const loadHistory = useCallback(async () => {
     const { data, error: err } = await supabase
@@ -57,11 +65,28 @@ export default function RateMasterPage() {
       return;
     }
     setHistory(data ?? []);
-  }, []);
+  }, [supabase]);
+
+  const loadUser = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+    setUserEmail(user.email ?? null);
+
+    const { data: profileRows } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .returns<{ role: UserRole }[]>();
+
+    setUserRole(profileRows?.[0]?.role ?? "employee");
+  }, [supabase]);
 
   useEffect(() => {
     async function initialLoad() {
-      await Promise.all([loadCurrentRates(), loadHistory()]);
+      await Promise.all([loadCurrentRates(), loadHistory(), loadUser()]);
       setLoading(false);
     }
     initialLoad();
@@ -71,7 +96,13 @@ export default function RateMasterPage() {
       loadHistory();
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [loadCurrentRates, loadHistory]);
+  }, [loadCurrentRates, loadHistory, loadUser]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <div className="flex min-h-full flex-col bg-[#F5F6F8] text-[#1a1a1a]">
@@ -79,6 +110,9 @@ export default function RateMasterPage() {
         title="Naresh Jewellers"
         subtitle="Rate Master"
         statusText={lastSynced ? `Last synced: ${formatDateTime(lastSynced)}` : undefined}
+        userEmail={userEmail ?? undefined}
+        userRole={userRole ?? undefined}
+        onSignOut={handleSignOut}
       />
 
       <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 py-8 pb-16">
@@ -94,6 +128,10 @@ export default function RateMasterPage() {
           )}
           {error && (
             <div className="px-4 py-4 text-[13px] text-[#B42318]">{error}</div>
+          )}
+
+          {!loading && userRole === "admin" && userEmail && (
+            <UpdateRateForm userEmail={userEmail} onUpdated={loadCurrentRates} />
           )}
 
           {!loading && (
