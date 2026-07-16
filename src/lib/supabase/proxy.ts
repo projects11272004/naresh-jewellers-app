@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Refreshes the Supabase session on every request and redirects unauthenticated
+// visitors to /login. Every page in this app requires a logged-in account
+// (admin or employee) - there is no public, unauthenticated view of any data.
 const PUBLIC_PATHS = ["/login"];
 
 export async function updateSession(request: NextRequest) {
@@ -9,6 +12,8 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
+    // Misconfigured env vars - let the request through; the page-level client
+    // will throw a clearer error than failing silently here.
     return supabaseResponse;
   }
 
@@ -27,6 +32,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
+  // IMPORTANT: getClaims() validates the JWT signature - never trust getSession()
+  // here, it doesn't guarantee the token has been revalidated. Fail secure: if
+  // this call throws for any reason (network hiccup, misconfiguration), treat
+  // the visitor as logged out rather than silently letting the request through.
   let isLoggedIn = false;
   try {
     const { data } = await supabase.auth.getClaims();

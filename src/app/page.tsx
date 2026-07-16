@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { CurrentRateRow, RateLogRow, UserRole } from "@/types/database";
 import Header from "@/components/Header";
+import AppNav from "@/components/AppNav";
 import RateCard from "@/components/RateCard";
 import RateHistoryTable from "@/components/RateHistoryTable";
 import UpdateRateForm from "@/components/UpdateRateForm";
 import { formatDateTime } from "@/lib/format";
 
+// Force dynamic rendering: this page previously prerendered as fully static
+// HTML at build time, which meant Vercel's CDN could serve it directly from
+// cache without ever invoking middleware.ts - so the login redirect never
+// ran for unauthenticated visitors. Forcing dynamic rendering makes every
+// request go through middleware first, every time.
 export const dynamic = "force-dynamic";
 
 const PURITY_ORDER = ["24K", "22K", "18K", "14K", "Silver"];
@@ -116,6 +122,7 @@ export default function RateMasterPage() {
         userRole={userRole ?? undefined}
         onSignOut={handleSignOut}
       />
+      <AppNav role={userRole} />
 
       <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 py-8 pb-16">
         <section className="mb-10">

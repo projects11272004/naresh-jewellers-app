@@ -37,7 +37,21 @@ export interface ProfileRow {
   id: string; // matches auth.users.id
   role: UserRole;
   full_name: string | null;
+  email: string | null;
   created_at: string;
+}
+
+// Every grantable, per-employee feature permission across the whole app.
+// Add a new key here (and check it with has_permission() in RLS) whenever a
+// future phase needs its own admin-grantable edit permission - no schema
+// migration needed beyond the permissions table itself.
+export type PermissionKey = "inventory:edit";
+
+export interface PermissionRow {
+  user_id: string;
+  permission: PermissionKey;
+  granted_at: string;
+  granted_by: string | null;
 }
 
 // Minimal Database shape for the supabase-js generic client typing, matching the
@@ -69,6 +83,12 @@ export interface Database {
         Row: ProfileRow;
         Insert: Partial<ProfileRow>;
         Update: Partial<ProfileRow>;
+        Relationships: [];
+      };
+      permissions: {
+        Row: PermissionRow;
+        Insert: Partial<PermissionRow>;
+        Update: Partial<PermissionRow>;
         Relationships: [];
       };
     };
