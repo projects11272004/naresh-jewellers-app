@@ -54,6 +54,52 @@ export interface PermissionRow {
   granted_by: string | null;
 }
 
+// Phase 2: Inventory. Items are keyed by barcode (shop-assigned, not
+// manufacturer barcodes) - scanning a known barcode loads the existing row,
+// scanning an unknown one starts a blank draft with just the barcode filled.
+// Most fields are nullable because a freshly-scanned draft may not have them
+// yet; a row is only "priceable" once purity/net_weight/making charge are set
+// (see src/lib/pricing.ts).
+export type MakingChargeType = "percentage" | "per_gram" | "flat";
+export type ItemStatus = "in_stock" | "sold" | "transferred" | "written_off";
+
+export interface ItemRow {
+  id: number;
+  barcode: string;
+  huid: string | null;
+  item_name: string | null;
+  purity: Purity | null;
+  gross_weight: number | null;
+  net_weight: number | null;
+  stone_weight: number;
+  stone_charges: number;
+  making_charge_type: MakingChargeType | null;
+  making_charge_value: number | null;
+  wastage_pct: number;
+  status: ItemStatus;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
+export type StockLogAction =
+  | "created"
+  | "updated"
+  | "sold"
+  | "transferred"
+  | "written_off"
+  | "restocked";
+
+export interface StockLogRow {
+  id: number;
+  item_id: number;
+  action: StockLogAction;
+  note: string | null;
+  changed_at: string;
+  changed_by: string | null;
+}
+
 // Minimal Database shape for the supabase-js generic client typing, matching the
 // structure produced by `supabase gen types typescript` (Row/Insert/Update/Relationships
 // per table) so the postgrest-js generics resolve correctly instead of falling back to `never`.
@@ -91,9 +137,26 @@ export interface Database {
         Update: Partial<PermissionRow>;
         Relationships: [];
       };
+      items: {
+        Row: ItemRow;
+        Insert: Partial<ItemRow>;
+        Update: Partial<ItemRow>;
+        Relationships: [];
+      };
+      stock_log: {
+        Row: StockLogRow;
+        Insert: Partial<StockLogRow>;
+        Update: Partial<StockLogRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      has_permission: {
+        Args: { check_permission: string };
+        Returns: boolean;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
