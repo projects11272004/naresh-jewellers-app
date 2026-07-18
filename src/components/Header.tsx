@@ -1,3 +1,5 @@
+import ThemeToggle from "./ThemeToggle";
+
 interface HeaderProps {
   title: string;
   subtitle: string;
@@ -16,12 +18,12 @@ export default function Header({
   onSignOut,
 }: HeaderProps) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-2 bg-[#1F3864] px-8 py-7 text-white">
+    <header className="flex flex-wrap items-center justify-between gap-2 bg-primary px-8 py-7 text-white">
       <div>
         <h1 className="m-0 text-[22px] tracking-wide">{title}</h1>
-        <div className="mt-0.5 text-[13px] text-[#C9D3E5]">{subtitle}</div>
+        <div className="mt-0.5 text-[13px] text-header-subtext">{subtitle}</div>
       </div>
-      <div className="flex items-center gap-4 text-right text-[13px] text-[#C9D3E5]">
+      <div className="flex items-center gap-4 text-right text-[13px] text-header-subtext">
         <div>
           <div>{statusText ?? "Loading…"}</div>
           {userEmail && (
@@ -35,6 +37,7 @@ export default function Header({
             </div>
           )}
         </div>
+        <ThemeToggle />
         {onSignOut && (
           <button
             onClick={onSignOut}

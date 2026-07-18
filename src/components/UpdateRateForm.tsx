@@ -76,16 +76,16 @@ export default function UpdateRateForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm"
+      className="mb-6 flex flex-wrap items-end gap-3 rounded-lg bg-surface p-4 shadow-sm"
     >
       <div>
-        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
+        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted">
           Purity
         </label>
         <select
           value={purity}
           onChange={(e) => setPurity(e.target.value as Purity)}
-          className="rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+          className="rounded-md border border-border bg-transparent px-3 py-2 text-[14px] text-foreground outline-none focus:border-primary"
         >
           {PURITIES.map((p) => (
             <option key={p} value={p}>
@@ -96,7 +96,7 @@ export default function UpdateRateForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
+        <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted">
           New rate (₹/gram)
         </label>
         <input
@@ -106,14 +106,14 @@ export default function UpdateRateForm({
           value={rate}
           onChange={(e) => setRate(e.target.value)}
           placeholder="e.g. 14636.76"
-          className="w-40 rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+          className="w-40 rounded-md border border-border bg-transparent px-3 py-2 text-[14px] text-foreground outline-none focus:border-primary placeholder:text-faint"
         />
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-[#1F3864] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+        className="rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
       >
         {submitting ? "Updating…" : "Update rate"}
       </button>
@@ -121,7 +121,7 @@ export default function UpdateRateForm({
       {message && (
         <div
           className={`w-full text-[13px] ${
-            message.type === "ok" ? "text-[#1E7145]" : "text-[#B42318]"
+            message.type === "ok" ? "text-success-text" : "text-danger-text"
           }`}
         >
           {message.text}

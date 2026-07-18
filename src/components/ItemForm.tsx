@@ -27,9 +27,9 @@ const BLANK_FIELDS = {
 };
 
 const inputCls =
-  "w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]";
+  "w-full rounded-md border border-border bg-transparent px-3 py-2 text-[14px] text-foreground outline-none focus:border-primary placeholder:text-faint";
 const labelCls =
-  "mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]";
+  "mb-1 block text-[11px] font-bold uppercase tracking-wide text-muted";
 
 export default function ItemForm({
   userEmail,
@@ -245,7 +245,7 @@ export default function ItemForm({
   }
 
   return (
-    <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+    <div className="mb-6 rounded-lg bg-surface p-4 shadow-sm">
       <form onSubmit={handleScan} className="mb-4 flex items-end gap-3">
         <div className="flex-1">
           <label className={labelCls}>Scan tag to edit an existing item</label>
@@ -261,7 +261,7 @@ export default function ItemForm({
         <button
           type="submit"
           disabled={busy || !barcode.trim()}
-          className="rounded-md bg-[#5B6472] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+          className="rounded-md bg-secondary px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
         >
           {busy ? "Working…" : "Find"}
         </button>
@@ -269,7 +269,7 @@ export default function ItemForm({
           type="button"
           onClick={handleNewItem}
           disabled={busy}
-          className="rounded-md bg-[#1F3864] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+          className="rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
         >
           + New Item
         </button>
@@ -277,14 +277,14 @@ export default function ItemForm({
 
       {message && (
         <div
-          className={`mb-3 flex items-center gap-3 text-[13px] ${message.type === "ok" ? "text-[#1E7145]" : "text-[#B42318]"}`}
+          className={`mb-3 flex items-center gap-3 text-[13px] ${message.type === "ok" ? "text-success-text" : "text-danger-text"}`}
         >
           <span>{message.text}</span>
           {lastSavedTag && (
             <button
               type="button"
               onClick={() => printTag(lastSavedTag)}
-              className="rounded-md border border-[#1F3864] px-3 py-1 text-[12px] font-medium text-[#1F3864]"
+              className="rounded-md border border-primary px-3 py-1 text-[12px] font-medium text-primary-text"
             >
               Print tag {lastSavedTag.barcode}
             </button>
@@ -493,14 +493,14 @@ export default function ItemForm({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-md bg-[#1F3864] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+              className="rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
             >
               {submitting ? "Saving…" : mode === "new" ? "Save new item" : "Save changes"}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-md border border-[#D9DCE1] px-4 py-2 text-[14px] font-medium text-[#5B6472]"
+              className="rounded-md border border-border px-4 py-2 text-[14px] font-medium text-muted"
             >
               Cancel
             </button>

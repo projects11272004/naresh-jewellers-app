@@ -4,10 +4,10 @@ import { formatINR, formatDateTime } from "@/lib/format";
 export default function RateHistoryTable({ rows }: { rows: RateLogRow[] }) {
   if (!rows.length) {
     return (
-      <table className="w-full overflow-hidden rounded-lg bg-white shadow-sm">
+      <table className="w-full overflow-hidden rounded-lg bg-surface shadow-sm">
         <tbody>
           <tr>
-            <td className="px-3.5 py-2.5 text-[13px]">No history yet.</td>
+            <td className="px-3.5 py-2.5 text-[13px] text-foreground">No history yet.</td>
           </tr>
         </tbody>
       </table>
@@ -15,9 +15,9 @@ export default function RateHistoryTable({ rows }: { rows: RateLogRow[] }) {
   }
 
   return (
-    <table className="w-full overflow-hidden rounded-lg bg-white shadow-sm">
+    <table className="w-full overflow-hidden rounded-lg bg-surface shadow-sm">
       <thead>
-        <tr className="bg-[#1F3864] text-white">
+        <tr className="bg-primary text-white">
           <th className="px-3.5 py-2.5 text-left text-xs">Purity</th>
           <th className="px-3.5 py-2.5 text-left text-xs">Rate / gram (INR)</th>
           <th className="px-3.5 py-2.5 text-left text-xs">Updated On</th>
@@ -29,25 +29,25 @@ export default function RateHistoryTable({ rows }: { rows: RateLogRow[] }) {
         {rows.map((row, i) => {
           const isAuto = row.source === "Auto-Sync API";
           return (
-            <tr key={`${row.id}-${i}`} className="even:bg-[#FAFBFC]">
-              <td className="border-b border-[#EDEDED] px-3.5 py-2.5 text-[13px]">
+            <tr key={`${row.id}-${i}`} className="even:bg-row-hover">
+              <td className="border-b border-divider-light px-3.5 py-2.5 text-[13px] text-foreground">
                 {row.purity}
               </td>
-              <td className="border-b border-[#EDEDED] px-3.5 py-2.5 text-[13px]">
+              <td className="border-b border-divider-light px-3.5 py-2.5 text-[13px] text-foreground">
                 {formatINR(row.rate_per_gram)}
               </td>
-              <td className="border-b border-[#EDEDED] px-3.5 py-2.5 text-[13px]">
+              <td className="border-b border-divider-light px-3.5 py-2.5 text-[13px] text-foreground">
                 {formatDateTime(row.updated_on)}
               </td>
-              <td className="border-b border-[#EDEDED] px-3.5 py-2.5 text-[13px]">
+              <td className="border-b border-divider-light px-3.5 py-2.5 text-[13px] text-foreground">
                 {row.updated_by ?? ""}
               </td>
-              <td className="border-b border-[#EDEDED] px-3.5 py-2.5 text-[13px]">
+              <td className="border-b border-divider-light px-3.5 py-2.5 text-[13px]">
                 <span
                   className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${
                     isAuto
-                      ? "bg-[#DCFCE7] text-[#1E7145]"
-                      : "bg-[#FEF0C7] text-[#B54708]"
+                      ? "bg-success-bg text-success-text"
+                      : "bg-warning-bg text-warning-text"
                   }`}
                 >
                   {row.source}

@@ -8,10 +8,10 @@ import { formatINR, formatDateTime } from "@/lib/format";
 import { printTag } from "@/lib/tagPrint";
 
 const STATUS_STYLE: Record<string, string> = {
-  in_stock: "bg-[#E7F4EC] text-[#1E7145]",
-  sold: "bg-[#E9EDF5] text-[#1F3864]",
-  transferred: "bg-[#FFF3CD] text-[#8A6D00]",
-  written_off: "bg-[#FBE7E5] text-[#B42318]",
+  in_stock: "bg-success-bg text-success-text",
+  sold: "bg-info-bg text-info-text",
+  transferred: "bg-warning-bg text-warning-text",
+  written_off: "bg-danger-bg text-danger-text",
 };
 
 export default function InventoryTable({
@@ -60,7 +60,7 @@ export default function InventoryTable({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-lg bg-white p-6 text-[13px] text-[#5B6472] shadow-sm">
+      <div className="rounded-lg bg-surface p-6 text-[13px] text-muted shadow-sm">
         No items yet. Click &ldquo;+ New Item&rdquo; above to add the first one.
       </div>
     );
@@ -68,11 +68,11 @@ export default function InventoryTable({
 
   return (
     <div>
-      {error && <div className="mb-3 text-[13px] text-[#B42318]">{error}</div>}
-      <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+      {error && <div className="mb-3 text-[13px] text-danger-text">{error}</div>}
+      <div className="overflow-x-auto rounded-lg bg-surface shadow-sm">
         <table className="w-full text-left text-[13px]">
           <thead>
-            <tr className="border-b border-[#E3E5E8] text-[11px] uppercase tracking-wide text-[#5B6472]">
+            <tr className="border-b border-divider text-[11px] uppercase tracking-wide text-muted">
               <th className="px-4 py-3">Code</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Item</th>
@@ -90,7 +90,7 @@ export default function InventoryTable({
               const rate = item.purity ? (rateByPurity.get(item.purity) ?? null) : null;
               const price = calculateItemPrice(item, rate);
               return (
-                <tr key={item.id} className="border-b border-[#F0F1F3] last:border-0">
+                <tr key={item.id} className="border-b border-divider-light last:border-0">
                   <td className="px-4 py-3 font-mono text-[12px]">{item.barcode}</td>
                   <td className="px-4 py-3">
                     {item.category_id != null ? (categoryById.get(item.category_id) ?? "—") : "—"}
@@ -107,10 +107,10 @@ export default function InventoryTable({
                       {item.status.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-[#1F3864]">
+                  <td className="px-4 py-3 font-medium text-primary-text">
                     {price ? formatINR(price.total) : "Incomplete"}
                   </td>
-                  <td className="px-4 py-3 text-[#9AA0A6]">{formatDateTime(item.updated_at)}</td>
+                  <td className="px-4 py-3 text-faint">{formatDateTime(item.updated_at)}</td>
                   {canEdit && (
                     <td className="px-4 py-3">
                       <button
@@ -123,7 +123,7 @@ export default function InventoryTable({
                             stonePieces: item.has_stone ? item.stone_pieces : null,
                           })
                         }
-                        className="rounded-md border border-[#D9DCE1] px-2 py-1 text-[11px] font-medium text-[#5B6472] hover:border-[#1F3864] hover:text-[#1F3864]"
+                        className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-muted hover:border-primary hover:text-primary-text"
                       >
                         Print
                       </button>
@@ -135,7 +135,7 @@ export default function InventoryTable({
                         type="button"
                         onClick={() => handleDelete(item)}
                         disabled={deletingId === item.id}
-                        className="rounded-md border border-[#F3B4AC] px-2 py-1 text-[11px] font-medium text-[#B42318] hover:bg-[#FBE7E5] disabled:opacity-60"
+                        className="rounded-md border border-danger-border px-2 py-1 text-[11px] font-medium text-danger-text hover:bg-danger-bg disabled:opacity-60"
                       >
                         {deletingId === item.id ? "Deleting…" : "Delete"}
                       </button>

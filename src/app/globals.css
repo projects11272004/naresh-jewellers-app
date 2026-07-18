@@ -1,24 +1,95 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------
+   Semantic color tokens. Every component uses these (e.g. bg-surface,
+   text-muted) instead of hardcoded hex values, so the whole app follows
+   whichever theme is active. Light values live in :root; dark values
+   override them under the .dark class, which is toggled by ThemeToggle.tsx
+   and set on first load by the inline script in layout.tsx (before React
+   hydrates, to avoid a flash of the wrong theme).
+   --------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f6f8;
+  --surface: #ffffff;
+  --foreground: #1a1a1a;
+  --muted: #5b6472;
+  --faint: #9aa0a6;
+  --border: #d9dce1;
+  --divider: #e3e5e8;
+  --divider-light: #f0f1f3;
+  --primary: #1f3864;
+  --primary-text: #1f3864;
+  --accent: #c9a227;
+  --secondary: #5b6472;
+  --header-subtext: #c9d3e5;
+  --row-hover: #fafbfc;
+  --success-bg: #e7f4ec;
+  --success-text: #1e7145;
+  --info-bg: #e9edf5;
+  --info-text: #1f3864;
+  --warning-bg: #fff3cd;
+  --warning-text: #8a6d00;
+  --danger-bg: #fbe7e5;
+  --danger-text: #b42318;
+  --danger-border: #f3b4ac;
+}
+
+.dark {
+  --background: #14171c;
+  --surface: #1e2229;
+  --foreground: #ededed;
+  --muted: #a7aeb8;
+  --faint: #7b828c;
+  --border: #333944;
+  --divider: #2a2f38;
+  --divider-light: #262b33;
+  --primary: #1f3864;
+  --primary-text: #8fa9d6;
+  --accent: #d8b84a;
+  --secondary: #4b5563;
+  --header-subtext: #c9d3e5;
+  --row-hover: #20242c;
+  --success-bg: #14301f;
+  --success-text: #4ade80;
+  --info-bg: #232b3a;
+  --info-text: #8fa9d6;
+  --warning-bg: #3a2e05;
+  --warning-text: #e8b93e;
+  --danger-bg: #3a1512;
+  --danger-text: #f87171;
+  --danger-border: #6b2b26;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-border: var(--border);
+  --color-divider: var(--divider);
+  --color-divider-light: var(--divider-light);
+  --color-primary: var(--primary);
+  --color-primary-text: var(--primary-text);
+  --color-accent: var(--accent);
+  --color-secondary: var(--secondary);
+  --color-header-subtext: var(--header-subtext);
+  --color-row-hover: var(--row-hover);
+  --color-success-bg: var(--success-bg);
+  --color-success-text: var(--success-text);
+  --color-info-bg: var(--info-bg);
+  --color-info-text: var(--info-text);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-text: var(--warning-text);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-text: var(--danger-text);
+  --color-danger-border: var(--danger-border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }

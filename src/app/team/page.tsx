@@ -123,7 +123,7 @@ export default function TeamAccessPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F5F6F8] text-[#1a1a1a]">
+    <div className="flex min-h-full flex-col bg-background text-foreground">
       <Header
         title="Naresh Jewellers"
         subtitle="Team & Access"
@@ -135,27 +135,27 @@ export default function TeamAccessPage() {
 
       <main className="mx-auto w-full max-w-[900px] flex-1 px-6 py-8 pb-16">
         {loading && (
-          <div className="px-4 py-4 text-[13px] text-[#5B6472]">Loading…</div>
+          <div className="px-4 py-4 text-[13px] text-muted">Loading…</div>
         )}
 
         {!loading && viewerRole !== "admin" && (
-          <div className="rounded-lg bg-white p-6 text-[14px] text-[#B42318] shadow-sm">
+          <div className="rounded-lg bg-surface p-6 text-[14px] text-danger-text shadow-sm">
             Only admins can view this page.
           </div>
         )}
 
         {!loading && viewerRole === "admin" && (
           <>
-            <h2 className="mb-4 border-b-2 border-[#C9A227] pb-2 text-[15px] uppercase tracking-wide text-[#5B6472]">
+            <h2 className="mb-4 border-b-2 border-accent pb-2 text-[15px] uppercase tracking-wide text-muted">
               Employee Access
             </h2>
 
             {error && (
-              <div className="mb-4 px-4 py-3 text-[13px] text-[#B42318]">{error}</div>
+              <div className="mb-4 px-4 py-3 text-[13px] text-danger-text">{error}</div>
             )}
 
             {employees.length === 0 && (
-              <div className="rounded-lg bg-white p-6 text-[13px] text-[#5B6472] shadow-sm">
+              <div className="rounded-lg bg-surface p-6 text-[13px] text-muted shadow-sm">
                 No employee accounts yet. Create one from the Supabase dashboard
                 (Authentication → Add user) — it'll show up here automatically.
               </div>
@@ -167,19 +167,19 @@ export default function TeamAccessPage() {
                 return (
                   <div
                     key={employee.id}
-                    className="rounded-lg bg-white p-4 shadow-sm"
+                    className="rounded-lg bg-surface p-4 shadow-sm"
                   >
-                    <div className="mb-2 text-[14px] font-semibold text-[#1F3864]">
+                    <div className="mb-2 text-[14px] font-semibold text-primary-text">
                       {employee.full_name || employee.email || employee.id}
                     </div>
                     {employee.full_name && employee.email && (
-                      <div className="mb-3 text-[12px] text-[#9AA0A6]">{employee.email}</div>
+                      <div className="mb-3 text-[12px] text-faint">{employee.email}</div>
                     )}
                     <div className="flex flex-col gap-2">
                       {GRANTABLE_PERMISSIONS.map((perm) => (
                         <label
                           key={perm.key}
-                          className="flex items-center gap-2 text-[13px] text-[#5B6472]"
+                          className="flex items-center gap-2 text-[13px] text-muted"
                         >
                           <input
                             type="checkbox"

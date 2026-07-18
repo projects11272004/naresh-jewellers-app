@@ -113,7 +113,7 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F5F6F8] text-[#1a1a1a]">
+    <div className="flex min-h-full flex-col bg-background text-foreground">
       <Header
         title="Naresh Jewellers"
         subtitle="Categories"
@@ -124,10 +124,10 @@ export default function CategoriesPage() {
       <AppNav role={userRole} />
 
       <main className="mx-auto w-full max-w-[720px] flex-1 px-6 py-8 pb-16">
-        {loading && <div className="px-4 py-4 text-[13px] text-[#5B6472]">Loading…</div>}
+        {loading && <div className="px-4 py-4 text-[13px] text-muted">Loading…</div>}
 
         {!loading && !canEdit && (
-          <div className="rounded-lg bg-white p-6 text-[14px] text-[#B42318] shadow-sm">
+          <div className="rounded-lg bg-surface p-6 text-[14px] text-danger-text shadow-sm">
             You don&apos;t have access to manage categories. Ask an admin to grant
             it from Team &amp; Access.
           </div>
@@ -135,32 +135,32 @@ export default function CategoriesPage() {
 
         {!loading && canEdit && (
           <>
-            <h2 className="mb-4 border-b-2 border-[#C9A227] pb-2 text-[15px] uppercase tracking-wide text-[#5B6472]">
+            <h2 className="mb-4 border-b-2 border-accent pb-2 text-[15px] uppercase tracking-wide text-muted">
               Item Categories
             </h2>
 
-            {error && <div className="mb-4 text-[13px] text-[#B42318]">{error}</div>}
+            {error && <div className="mb-4 text-[13px] text-danger-text">{error}</div>}
 
             <form onSubmit={handleAdd} className="mb-6 flex gap-3">
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="New category name"
-                className="flex-1 rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-[14px] text-foreground outline-none focus:border-primary placeholder:text-faint"
               />
               <button
                 type="submit"
                 disabled={busy || !newName.trim()}
-                className="rounded-md bg-[#1F3864] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+                className="rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
               >
                 Add
               </button>
             </form>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div className="overflow-hidden rounded-lg bg-surface shadow-sm">
               <table className="w-full text-left text-[13px]">
                 <thead>
-                  <tr className="border-b border-[#E3E5E8] text-[11px] uppercase tracking-wide text-[#5B6472]">
+                  <tr className="border-b border-divider text-[11px] uppercase tracking-wide text-muted">
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3"></th>
@@ -168,12 +168,12 @@ export default function CategoriesPage() {
                 </thead>
                 <tbody>
                   {categories.map((cat) => (
-                    <tr key={cat.id} className="border-b border-[#F0F1F3] last:border-0">
-                      <td className={`px-4 py-3 ${!cat.active ? "text-[#9AA0A6]" : ""}`}>{cat.name}</td>
+                    <tr key={cat.id} className="border-b border-divider-light last:border-0">
+                      <td className={`px-4 py-3 ${!cat.active ? "text-faint" : "text-foreground"}`}>{cat.name}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                            cat.active ? "bg-[#E7F4EC] text-[#1E7145]" : "bg-[#F0F1F3] text-[#9AA0A6]"
+                            cat.active ? "bg-success-bg text-success-text" : "bg-divider-light text-faint"
                           }`}
                         >
                           {cat.active ? "Active" : "Inactive"}
@@ -183,7 +183,7 @@ export default function CategoriesPage() {
                         <button
                           type="button"
                           onClick={() => toggleActive(cat)}
-                          className="rounded-md border border-[#D9DCE1] px-3 py-1 text-[12px] font-medium text-[#5B6472] hover:border-[#1F3864] hover:text-[#1F3864]"
+                          className="rounded-md border border-border px-3 py-1 text-[12px] font-medium text-muted hover:border-primary hover:text-primary-text"
                         >
                           {cat.active ? "Deactivate" : "Reactivate"}
                         </button>
@@ -193,7 +193,7 @@ export default function CategoriesPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-[12px] text-[#9AA0A6]">
+            <p className="mt-3 text-[12px] text-faint">
               Deactivating hides a category from the item form dropdown but
               keeps it (and any items already using it) intact — nothing is
               ever deleted.

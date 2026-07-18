@@ -127,7 +127,7 @@ export default function RateMasterPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F5F6F8] text-[#1a1a1a]">
+    <div className="flex min-h-full flex-col bg-background text-foreground">
       <Header
         title="Naresh Jewellers"
         subtitle="Rate Master"
@@ -140,17 +140,17 @@ export default function RateMasterPage() {
 
       <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 py-8 pb-16">
         <section className="mb-10">
-          <h2 className="mb-4 border-b-2 border-[#C9A227] pb-2 text-[15px] uppercase tracking-wide text-[#5B6472]">
+          <h2 className="mb-4 border-b-2 border-accent pb-2 text-[15px] uppercase tracking-wide text-muted">
             Current Rates
           </h2>
 
           {loading && (
-            <div className="px-4 py-4 text-[13px] text-[#5B6472]">
+            <div className="px-4 py-4 text-[13px] text-muted">
               Loading current rates…
             </div>
           )}
           {error && (
-            <div className="px-4 py-4 text-[13px] text-[#B42318]">{error}</div>
+            <div className="px-4 py-4 text-[13px] text-danger-text">{error}</div>
           )}
 
           {!loading && userRole === "admin" && userEmail && (
@@ -167,7 +167,7 @@ export default function RateMasterPage() {
         </section>
 
         <section>
-          <h2 className="mb-4 border-b-2 border-[#C9A227] pb-2 text-[15px] uppercase tracking-wide text-[#5B6472]">
+          <h2 className="mb-4 border-b-2 border-accent pb-2 text-[15px] uppercase tracking-wide text-muted">
             Rate History
           </h2>
           <RateHistoryTable rows={history} />

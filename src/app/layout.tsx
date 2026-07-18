@@ -11,6 +11,22 @@ export const metadata: Metadata = {
   description: "Phase 1: Rate Master — live gold & silver rate dashboard",
 };
 
+// Runs before React hydrates, applying the saved theme (or system preference,
+// if nothing saved yet) directly to <html> as a `dark` class. Without this,
+// the page would render light for a split second before JS caught up and
+// switched to dark — this script removes that flash entirely.
+const THEME_INIT_SCRIPT = `
+(function() {
+  try {
+    var theme = localStorage.getItem('nj-theme');
+    if (!theme) {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,6 +34,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

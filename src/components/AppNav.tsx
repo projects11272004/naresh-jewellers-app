@@ -24,7 +24,7 @@ export default function AppNav({ role }: { role: UserRole | null }) {
   if (items.length <= 1) return null;
 
   return (
-    <nav className="flex gap-1 border-b border-[#E3E5E8] bg-white px-8">
+    <nav className="flex gap-1 border-b border-divider bg-surface px-8">
       {items.map((item) => {
         const active = pathname === item.href;
         return (
@@ -33,8 +33,8 @@ export default function AppNav({ role }: { role: UserRole | null }) {
             href={item.href}
             className={`px-3 py-2.5 text-[13px] font-medium border-b-2 ${
               active
-                ? "border-[#1F3864] text-[#1F3864]"
-                : "border-transparent text-[#5B6472] hover:text-[#1F3864]"
+                ? "border-primary text-primary-text"
+                : "border-transparent text-muted hover:text-primary-text"
             }`}
           >
             {item.label}

@@ -108,7 +108,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F5F6F8] text-[#1a1a1a]">
+    <div className="flex min-h-full flex-col bg-background text-foreground">
       <Header
         title="Naresh Jewellers"
         subtitle="Inventory"
@@ -120,16 +120,16 @@ export default function InventoryPage() {
 
       <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 py-8 pb-16">
         {loading && (
-          <div className="px-4 py-4 text-[13px] text-[#5B6472]">Loading inventory…</div>
+          <div className="px-4 py-4 text-[13px] text-muted">Loading inventory…</div>
         )}
-        {error && <div className="px-4 py-4 text-[13px] text-[#B42318]">{error}</div>}
+        {error && <div className="px-4 py-4 text-[13px] text-danger-text">{error}</div>}
 
         {!loading && canEdit && userEmail && (
           <ItemForm userEmail={userEmail} categories={categories} onSaved={loadItems} />
         )}
 
         {!loading && !canEdit && (
-          <div className="mb-6 rounded-lg bg-white p-4 text-[13px] text-[#5B6472] shadow-sm">
+          <div className="mb-6 rounded-lg bg-surface p-4 text-[13px] text-muted shadow-sm">
             You have view-only access to inventory. Ask an admin to grant you
             edit access from Team &amp; Access if you need to add or update items.
           </div>
