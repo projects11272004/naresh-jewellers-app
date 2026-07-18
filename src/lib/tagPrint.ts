@@ -1,15 +1,20 @@
 import JsBarcode from "jsbarcode";
 
 // ---------------------------------------------------------------------------
-// Printable jewellery tag (rat-tail style, like the RL7030 sample).
+// Printable jewellery tag - rat-tail style, matching the client's actual
+// label stock: 15mm wide x 100mm long (the 100mm includes the long thin
+// tail that wraps around the piece; only the first ~40mm or so is actually
+// printed on). Content is laid out LEFT-TO-RIGHT along the 100mm length
+// (not stacked top-to-bottom) because 15mm isn't tall enough to stack
+// GW/NW/Pcs + barcode + code as separate rows - it fits comfortably as a
+// single horizontal strip instead, which also matches the proportions in
+// the client's reference photo (small printed flap, long blank tail).
 //
-// ADJUST THESE TWO NUMBERS to the measured white printable flap of your
-// actual tags (width × height in millimetres, of just the rectangular part
-// that gets printed — not the thin tail). Once the client measures the real
-// tags, set these and the layout will match exactly.
+// If the client's actual tags turn out to need different dimensions later,
+// only these two constants need to change.
 // ---------------------------------------------------------------------------
-const LABEL_WIDTH_MM = 32;
-const LABEL_HEIGHT_MM = 22;
+const LABEL_WIDTH_MM = 100; // length, including the blank tail
+const LABEL_HEIGHT_MM = 15; // width of the flap
 
 export interface TagData {
   barcode: string; // e.g. NJ00001 — encoded as Code 128
@@ -34,11 +39,11 @@ export function printTag(tag: TagData): void {
     format: "CODE128",
     displayValue: false,
     margin: 0,
-    height: 30,
+    height: 34,
   });
   const barcodeSvg = svgHolder.outerHTML;
 
-  const win = window.open("", "_blank", "width=420,height=360");
+  const win = window.open("", "_blank", "width=520,height=260");
   if (!win) {
     alert("Popup blocked — allow popups for this site to print tags.");
     return;
@@ -55,27 +60,44 @@ export function printTag(tag: TagData): void {
   .tag {
     width: ${LABEL_WIDTH_MM}mm;
     height: ${LABEL_HEIGHT_MM}mm;
-    padding: 0.8mm 1mm;
+    padding: 0 1.2mm;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    align-items: center;
     overflow: hidden;
   }
-  .row { font-size: 5.4pt; font-weight: bold; line-height: 1.25; white-space: nowrap; }
-  .barcode { width: 100%; }
-  .barcode svg { width: 100%; height: 7mm; display: block; }
-  .code { font-size: 5.4pt; font-weight: bold; letter-spacing: 0.2mm; }
+  /* Printed content only occupies the left portion of the tag; the rest
+     (the tail) is deliberately left blank. */
+  .textblock {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3mm;
+    margin-right: 2mm;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .row { font-size: 5pt; font-weight: bold; line-height: 1.15; }
+  .barcodeblock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+  .barcode svg { height: 9mm; display: block; }
+  .code { font-size: 5pt; font-weight: bold; letter-spacing: 0.15mm; margin-top: 0.3mm; }
 </style>
 </head>
 <body>
   <div class="tag">
-    <div>
+    <div class="textblock">
       ${line("GW", tag.grossWeight != null ? tag.grossWeight.toFixed(3) : null)}
       ${line("NW", tag.netWeight != null ? tag.netWeight.toFixed(3) : null)}
       ${line("Pcs", tag.stonePieces != null ? String(tag.stonePieces) : null)}
     </div>
-    <div class="barcode">${barcodeSvg}</div>
-    <div class="code">${tag.barcode}</div>
+    <div class="barcodeblock">
+      <div class="barcode">${barcodeSvg}</div>
+      <div class="code">${tag.barcode}</div>
+    </div>
   </div>
   <script>
     window.onload = function () {
