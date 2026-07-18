@@ -44,6 +44,8 @@ export default function CustomersPage() {
 
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "lifetime" | "recent" | "segment">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -208,11 +210,30 @@ export default function CustomersPage() {
     router.refresh();
   }
 
-  const filtered = customers.filter((c) => {
-    if (!search.trim()) return true;
-    const q = search.trim().toLowerCase();
-    return c.name.toLowerCase().includes(q) || c.mobile.includes(q);
-  });
+  const SEGMENT_SORT_ORDER: Record<string, number> = { high_value: 0, regular: 1, new: 2, inactive: 3 };
+
+  const filtered = customers
+    .filter((c) => {
+      if (!search.trim()) return true;
+      const q = search.trim().toLowerCase();
+      return c.name.toLowerCase().includes(q) || c.mobile.includes(q);
+    })
+    .sort((a, b) => {
+      let result = 0;
+      if (sortBy === "name") {
+        result = a.name.localeCompare(b.name);
+      } else if (sortBy === "lifetime") {
+        result = a.total_lifetime_purchase - b.total_lifetime_purchase;
+      } else if (sortBy === "recent") {
+        // Customers with no purchases yet sort to the end regardless of direction.
+        const aTime = a.last_purchase_at ? new Date(a.last_purchase_at).getTime() : -Infinity;
+        const bTime = b.last_purchase_at ? new Date(b.last_purchase_at).getTime() : -Infinity;
+        result = aTime - bTime;
+      } else if (sortBy === "segment") {
+        result = SEGMENT_SORT_ORDER[computeSegment(a)] - SEGMENT_SORT_ORDER[computeSegment(b)];
+      }
+      return sortDir === "asc" ? result : -result;
+    });
 
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
@@ -231,8 +252,8 @@ export default function CustomersPage() {
 
         {!loading && (
           <>
-            <div className="mb-4 flex items-end gap-3">
-              <div className="flex-1">
+            <div className="mb-4 flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[200px]">
                 <label className={labelCls}>Search by name or mobile number</label>
                 <input
                   value={search}
@@ -241,6 +262,27 @@ export default function CustomersPage() {
                   className={inputCls}
                 />
               </div>
+              <div>
+                <label className={labelCls}>Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className={inputCls}
+                >
+                  <option value="name">Name</option>
+                  <option value="lifetime">Lifetime purchase</option>
+                  <option value="recent">Most recent purchase</option>
+                  <option value="segment">Segment</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+                title={sortDir === "asc" ? "Ascending" : "Descending"}
+                className="rounded-md border border-border px-3 py-2 text-[14px] text-muted hover:border-primary hover:text-primary-text"
+              >
+                {sortDir === "asc" ? "↑ Asc" : "↓ Desc"}
+              </button>
               {canEdit && (
                 <button
                   type="button"
