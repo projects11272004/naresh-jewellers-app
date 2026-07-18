@@ -43,7 +43,11 @@ export interface ProfileRow {
 
 // Add new keys here as future phases need them (and a checkbox row in
 // GRANTABLE_PERMISSIONS on /team, and has_permission('the:key') in RLS).
-export type PermissionKey = "inventory:edit" | "categories:edit";
+// NOTE: voiding an invoice and deleting an item are deliberately NOT
+// grantable permissions - both stay admin-only via is_admin() directly
+// (see migrations 007 and the Stage 2 invoices migration), so they can
+// never be handed to an employee through /team.
+export type PermissionKey = "inventory:edit" | "categories:edit" | "billing:create";
 
 export interface PermissionRow {
   user_id: string;
@@ -79,6 +83,8 @@ export interface ItemRow {
   has_polish: boolean;
   polish_pct: number | null; // billing weight = net_weight × (1 + polish_pct/100)
   making_charge_per_gram: number | null; // making charges are per-gram only
+  hsn_code: string | null; // tax classification for the material/goods
+  sac_code: string | null; // tax classification for the making-charge service
   status: ItemStatus;
   created_at: string;
   updated_at: string;
@@ -97,6 +103,28 @@ export interface StockLogRow {
   changed_by: string | null;
 }
 
+export interface CustomerRow {
+  id: number;
+  name: string;
+  mobile: string;
+  whatsapp_number: string | null;
+  whatsapp_same_as_mobile: boolean;
+  date_of_birth: string | null; // date
+  anniversary: string | null; // date
+  address: string | null;
+  state: string | null; // decides CGST+SGST vs IGST at billing time
+  jewellery_preference: string | null;
+  ring_size: string | null;
+  total_lifetime_purchase: number; // maintained by Billing (Stage 2), not computed here
+  outstanding_balance: number;
+  last_purchase_at: string | null;
+  tags: string[]; // freeform, manually assigned (e.g. "VIP") - separate from the auto-computed segment
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -108,6 +136,7 @@ export interface Database {
       categories: { Row: CategoryRow; Insert: Partial<CategoryRow>; Update: Partial<CategoryRow>; Relationships: []; };
       items: { Row: ItemRow; Insert: Partial<ItemRow>; Update: Partial<ItemRow>; Relationships: []; };
       stock_log: { Row: StockLogRow; Insert: Partial<StockLogRow>; Update: Partial<StockLogRow>; Relationships: []; };
+      customers: { Row: CustomerRow; Insert: Partial<CustomerRow>; Update: Partial<CustomerRow>; Relationships: []; };
     };
     Views: Record<string, never>;
     Functions: {

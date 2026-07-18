@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Rate Master" },
   { href: "/inventory", label: "Inventory" },
   { href: "/categories", label: "Categories" },
+  { href: "/customers", label: "Customers" },
   { href: "/team", label: "Team & Access", adminOnly: true },
 ];
 

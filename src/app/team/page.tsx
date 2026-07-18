@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 const GRANTABLE_PERMISSIONS: { key: PermissionKey; label: string }[] = [
   { key: "inventory:edit", label: "Inventory — add/edit items" },
   { key: "categories:edit", label: "Categories — add/rename/deactivate" },
+  { key: "billing:create", label: "Billing — create invoices & manage customers" },
 ];
 
 export default function TeamAccessPage() {
