@@ -136,7 +136,14 @@ export default function InventoryPage() {
         )}
 
         {!loading && (
-          <InventoryTable items={items} rates={rates} categories={categories} canEdit={canEdit} />
+          <InventoryTable
+            items={items}
+            rates={rates}
+            categories={categories}
+            canEdit={canEdit}
+            userRole={userRole}
+            onDeleted={loadItems}
+          />
         )}
       </main>
     </div>
