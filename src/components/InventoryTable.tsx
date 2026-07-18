@@ -1,6 +1,9 @@
-import type { CurrentRateRow, ItemRow } from "@/types/database";
+"use client";
+
+import type { CategoryRow, CurrentRateRow, ItemRow } from "@/types/database";
 import { calculateItemPrice } from "@/lib/pricing";
 import { formatINR, formatDateTime } from "@/lib/format";
+import { printTag } from "@/lib/tagPrint";
 
 const STATUS_STYLE: Record<string, string> = {
   in_stock: "bg-[#E7F4EC] text-[#1E7145]",
@@ -12,16 +15,21 @@ const STATUS_STYLE: Record<string, string> = {
 export default function InventoryTable({
   items,
   rates,
+  categories,
+  canEdit,
 }: {
   items: ItemRow[];
   rates: CurrentRateRow[];
+  categories: CategoryRow[];
+  canEdit: boolean;
 }) {
   const rateByPurity = new Map(rates.map((r) => [r.purity, r.rate_per_gram]));
+  const categoryById = new Map(categories.map((c) => [c.id, c.name]));
 
   if (items.length === 0) {
     return (
       <div className="rounded-lg bg-white p-6 text-[13px] text-[#5B6472] shadow-sm">
-        No items yet. Scan a barcode above to add the first one.
+        No items yet. Click &ldquo;+ New Item&rdquo; above to add the first one.
       </div>
     );
   }
@@ -31,13 +39,15 @@ export default function InventoryTable({
       <table className="w-full text-left text-[13px]">
         <thead>
           <tr className="border-b border-[#E3E5E8] text-[11px] uppercase tracking-wide text-[#5B6472]">
-            <th className="px-4 py-3">Barcode</th>
+            <th className="px-4 py-3">Code</th>
+            <th className="px-4 py-3">Category</th>
             <th className="px-4 py-3">Item</th>
             <th className="px-4 py-3">Purity</th>
             <th className="px-4 py-3">Net wt (g)</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Selling price</th>
             <th className="px-4 py-3">Updated</th>
+            {canEdit && <th className="px-4 py-3">Tag</th>}
           </tr>
         </thead>
         <tbody>
@@ -47,6 +57,9 @@ export default function InventoryTable({
             return (
               <tr key={item.id} className="border-b border-[#F0F1F3] last:border-0">
                 <td className="px-4 py-3 font-mono text-[12px]">{item.barcode}</td>
+                <td className="px-4 py-3">
+                  {item.category_id != null ? (categoryById.get(item.category_id) ?? "—") : "—"}
+                </td>
                 <td className="px-4 py-3">{item.item_name || "—"}</td>
                 <td className="px-4 py-3">{item.purity ?? "—"}</td>
                 <td className="px-4 py-3">{item.net_weight ?? "—"}</td>
@@ -63,6 +76,24 @@ export default function InventoryTable({
                   {price ? formatINR(price.total) : "Incomplete"}
                 </td>
                 <td className="px-4 py-3 text-[#9AA0A6]">{formatDateTime(item.updated_at)}</td>
+                {canEdit && (
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        printTag({
+                          barcode: item.barcode,
+                          grossWeight: item.gross_weight,
+                          netWeight: item.net_weight,
+                          stonePieces: item.has_stone ? item.stone_pieces : null,
+                        })
+                      }
+                      className="rounded-md border border-[#D9DCE1] px-2 py-1 text-[11px] font-medium text-[#5B6472] hover:border-[#1F3864] hover:text-[#1F3864]"
+                    >
+                      Print
+                    </button>
+                  </td>
+                )}
               </tr>
             );
           })}

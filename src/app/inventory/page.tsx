@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { CurrentRateRow, ItemRow, UserRole } from "@/types/database";
+import type { CategoryRow, CurrentRateRow, ItemRow, UserRole } from "@/types/database";
 import Header from "@/components/Header";
 import AppNav from "@/components/AppNav";
 import ItemForm from "@/components/ItemForm";
@@ -23,6 +23,7 @@ export default function InventoryPage() {
 
   const [rates, setRates] = useState<CurrentRateRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,13 +80,26 @@ export default function InventoryPage() {
     setItems(data ?? []);
   }, [supabase]);
 
+  const loadCategories = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name", { ascending: true })
+      .returns<CategoryRow[]>();
+    if (err) {
+      setError(`Could not load categories: ${err.message}`);
+      return;
+    }
+    setCategories(data ?? []);
+  }, [supabase]);
+
   useEffect(() => {
     async function initialLoad() {
-      await Promise.all([loadUser(), loadRates(), loadItems()]);
+      await Promise.all([loadUser(), loadRates(), loadItems(), loadCategories()]);
       setLoading(false);
     }
     initialLoad();
-  }, [loadUser, loadRates, loadItems]);
+  }, [loadUser, loadRates, loadItems, loadCategories]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -111,7 +125,7 @@ export default function InventoryPage() {
         {error && <div className="px-4 py-4 text-[13px] text-[#B42318]">{error}</div>}
 
         {!loading && canEdit && userEmail && (
-          <ItemForm userEmail={userEmail} onSaved={loadItems} />
+          <ItemForm userEmail={userEmail} categories={categories} onSaved={loadItems} />
         )}
 
         {!loading && !canEdit && (
@@ -121,7 +135,9 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {!loading && <InventoryTable items={items} rates={rates} />}
+        {!loading && (
+          <InventoryTable items={items} rates={rates} categories={categories} canEdit={canEdit} />
+        )}
       </main>
     </div>
   );

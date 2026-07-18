@@ -13,6 +13,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Rate Master" },
   { href: "/inventory", label: "Inventory" },
+  { href: "/categories", label: "Categories" },
   { href: "/team", label: "Team & Access", adminOnly: true },
 ];
 

@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 // future phase introduces a new admin-grantable permission key.
 const GRANTABLE_PERMISSIONS: { key: PermissionKey; label: string }[] = [
   { key: "inventory:edit", label: "Inventory — add/edit items" },
+  { key: "categories:edit", label: "Categories — add/rename/deactivate" },
 ];
 
 export default function TeamAccessPage() {

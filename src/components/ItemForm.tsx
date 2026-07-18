@@ -2,35 +2,42 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ItemRow, ItemStatus, MakingChargeType, Purity } from "@/types/database";
+import type { CategoryRow, ItemRow, ItemStatus, Purity } from "@/types/database";
+import { printTag, type TagData } from "@/lib/tagPrint";
 
 const PURITIES: Purity[] = ["24K", "22K", "18K", "14K", "Silver"];
-const MAKING_CHARGE_TYPES: { value: MakingChargeType; label: string }[] = [
-  { value: "percentage", label: "% of gold value" },
-  { value: "per_gram", label: "Per gram" },
-  { value: "flat", label: "Flat amount" },
-];
 const STATUSES: ItemStatus[] = ["in_stock", "sold", "transferred", "written_off"];
 
 const BLANK_FIELDS = {
-  huid: "",
+  categoryId: "" as string, // category id as string for the <select>
   itemName: "",
+  huid: "",
   purity: "24K" as Purity,
   grossWeight: "",
   netWeight: "",
+  hasStone: false,
+  stoneType: "",
+  stonePieces: "",
   stoneWeight: "",
   stoneCharges: "",
-  makingChargeType: "percentage" as MakingChargeType,
-  makingChargeValue: "",
-  wastagePct: "",
+  hasPolish: false,
+  polishPct: "",
+  makingChargePerGram: "",
   status: "in_stock" as ItemStatus,
 };
 
+const inputCls =
+  "w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]";
+const labelCls =
+  "mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]";
+
 export default function ItemForm({
   userEmail,
+  categories,
   onSaved,
 }: {
   userEmail: string;
+  categories: CategoryRow[];
   onSaved: () => void;
 }) {
   const supabase = createClient();
@@ -40,9 +47,13 @@ export default function ItemForm({
   const [mode, setMode] = useState<"new" | "edit" | null>(null);
   const [itemId, setItemId] = useState<number | null>(null);
   const [fields, setFields] = useState(BLANK_FIELDS);
-  const [looking, setLooking] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  // Kept after a save so staff can print the tag for the item just saved.
+  const [lastSavedTag, setLastSavedTag] = useState<TagData | null>(null);
+
+  const activeCategories = categories.filter((c) => c.active);
 
   function resetForm() {
     setBarcode("");
@@ -52,13 +63,35 @@ export default function ItemForm({
     barcodeInputRef.current?.focus();
   }
 
+  // "New Item" — asks the database for the next NJxxxxx code and opens a
+  // blank form with it. This is the normal way to add stock; the code it
+  // returns is what gets printed on the tag.
+  async function handleNewItem() {
+    setBusy(true);
+    setMessage(null);
+    setLastSavedTag(null);
+    const { data, error: err } = await supabase.rpc("generate_item_code", {} as never);
+    setBusy(false);
+    if (err || !data) {
+      setMessage({ type: "error", text: `Could not generate item code: ${err?.message ?? "no code returned"}` });
+      return;
+    }
+    setBarcode(String(data));
+    setMode("new");
+    setItemId(null);
+    setFields(BLANK_FIELDS);
+    setMessage({ type: "ok", text: `New item code ${data} — fill in the details and save.` });
+  }
+
+  // Scan an existing tag to open that item for editing.
   async function handleScan(e: React.FormEvent) {
     e.preventDefault();
     const code = barcode.trim();
     if (!code) return;
 
-    setLooking(true);
+    setBusy(true);
     setMessage(null);
+    setLastSavedTag(null);
 
     const { data, error: err } = await supabase
       .from("items")
@@ -66,7 +99,7 @@ export default function ItemForm({
       .eq("barcode", code)
       .returns<ItemRow[]>();
 
-    setLooking(false);
+    setBusy(false);
 
     if (err) {
       setMessage({ type: "error", text: `Lookup failed: ${err.message}` });
@@ -78,24 +111,33 @@ export default function ItemForm({
       setMode("edit");
       setItemId(existing.id);
       setFields({
-        huid: existing.huid ?? "",
+        categoryId: existing.category_id?.toString() ?? "",
         itemName: existing.item_name ?? "",
+        huid: existing.huid ?? "",
         purity: existing.purity ?? "24K",
         grossWeight: existing.gross_weight?.toString() ?? "",
         netWeight: existing.net_weight?.toString() ?? "",
-        stoneWeight: existing.stone_weight?.toString() ?? "",
-        stoneCharges: existing.stone_charges?.toString() ?? "",
-        makingChargeType: existing.making_charge_type ?? "percentage",
-        makingChargeValue: existing.making_charge_value?.toString() ?? "",
-        wastagePct: existing.wastage_pct?.toString() ?? "",
+        hasStone: existing.has_stone,
+        stoneType: existing.stone_type ?? "",
+        stonePieces: existing.stone_pieces?.toString() ?? "",
+        stoneWeight: existing.stone_weight ? existing.stone_weight.toString() : "",
+        stoneCharges: existing.stone_charges ? existing.stone_charges.toString() : "",
+        hasPolish: existing.has_polish,
+        polishPct: existing.polish_pct?.toString() ?? "",
+        makingChargePerGram: existing.making_charge_per_gram?.toString() ?? "",
         status: existing.status,
       });
-      setMessage({ type: "ok", text: `Found existing item — editing barcode ${code}.` });
+      setMessage({ type: "ok", text: `Found existing item — editing ${code}.` });
     } else {
+      // Codes are generated by the portal, so an unknown scan is usually a
+      // typo or an old/legacy tag. Still allow creating with it, but say so.
       setMode("new");
       setItemId(null);
       setFields(BLANK_FIELDS);
-      setMessage({ type: "ok", text: `New barcode — fill in the details below and save.` });
+      setMessage({
+        type: "ok",
+        text: `No item found for ${code}. You can fill in details to create it with this code — or use "New Item" to auto-generate a fresh NJ code instead.`,
+      });
     }
   }
 
@@ -104,10 +146,12 @@ export default function ItemForm({
     if (!mode) return;
 
     const netWeight = fields.netWeight ? Number(fields.netWeight) : null;
-    const makingChargeValue = fields.makingChargeValue ? Number(fields.makingChargeValue) : null;
-
     if (netWeight != null && netWeight <= 0) {
       setMessage({ type: "error", text: "Net weight must be greater than 0." });
+      return;
+    }
+    if (fields.hasPolish && fields.polishPct && Number(fields.polishPct) < 0) {
+      setMessage({ type: "error", text: "Polish % cannot be negative." });
       return;
     }
 
@@ -120,16 +164,22 @@ export default function ItemForm({
     // safety issue (Postgres + the checks above still validate the data).
     const payload = {
       barcode: barcode.trim(),
-      huid: fields.huid || null,
+      category_id: fields.categoryId ? Number(fields.categoryId) : null,
       item_name: fields.itemName || null,
+      huid: fields.huid || null,
       purity: fields.purity,
       gross_weight: fields.grossWeight ? Number(fields.grossWeight) : null,
       net_weight: netWeight,
-      stone_weight: fields.stoneWeight ? Number(fields.stoneWeight) : 0,
-      stone_charges: fields.stoneCharges ? Number(fields.stoneCharges) : 0,
-      making_charge_type: fields.makingChargeType,
-      making_charge_value: makingChargeValue,
-      wastage_pct: fields.wastagePct ? Number(fields.wastagePct) : 0,
+      has_stone: fields.hasStone,
+      // When "Stone: No", clear all stone fields so stale values never
+      // linger on an item that no longer has a stone.
+      stone_type: fields.hasStone ? fields.stoneType || null : null,
+      stone_pieces: fields.hasStone && fields.stonePieces ? Number(fields.stonePieces) : null,
+      stone_weight: fields.hasStone && fields.stoneWeight ? Number(fields.stoneWeight) : 0,
+      stone_charges: fields.hasStone && fields.stoneCharges ? Number(fields.stoneCharges) : 0,
+      has_polish: fields.hasPolish,
+      polish_pct: fields.hasPolish && fields.polishPct ? Number(fields.polishPct) : null,
+      making_charge_per_gram: fields.makingChargePerGram ? Number(fields.makingChargePerGram) : null,
       status: fields.status,
       updated_at: now,
       updated_by: userEmail,
@@ -178,7 +228,14 @@ export default function ItemForm({
     }
 
     setSubmitting(false);
-    setMessage({ type: "ok", text: `Saved barcode ${barcode.trim()}.` });
+    const savedCode = barcode.trim();
+    setMessage({ type: "ok", text: `Saved ${savedCode}.` });
+    setLastSavedTag({
+      barcode: savedCode,
+      grossWeight: payload.gross_weight,
+      netWeight: payload.net_weight,
+      stonePieces: payload.stone_pieces,
+    });
     onSaved();
     resetForm();
   }
@@ -191,68 +248,93 @@ export default function ItemForm({
     <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
       <form onSubmit={handleScan} className="mb-4 flex items-end gap-3">
         <div className="flex-1">
-          <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-            Scan or enter barcode
-          </label>
+          <label className={labelCls}>Scan tag to edit an existing item</label>
           <input
             ref={barcodeInputRef}
             autoFocus
             value={barcode}
             onChange={(e) => setBarcode(e.target.value)}
-            placeholder="Scan tag or type barcode, then Enter"
-            className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+            placeholder="Scan tag or type code (e.g. NJ00001), then Enter"
+            className={inputCls}
           />
         </div>
         <button
           type="submit"
-          disabled={looking || !barcode.trim()}
+          disabled={busy || !barcode.trim()}
           className="rounded-md bg-[#5B6472] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
         >
-          {looking ? "Looking up…" : "Find"}
+          {busy ? "Working…" : "Find"}
+        </button>
+        <button
+          type="button"
+          onClick={handleNewItem}
+          disabled={busy}
+          className="rounded-md bg-[#1F3864] px-4 py-2 text-[14px] font-medium text-white disabled:opacity-60"
+        >
+          + New Item
         </button>
       </form>
 
       {message && (
         <div
-          className={`mb-3 text-[13px] ${message.type === "ok" ? "text-[#1E7145]" : "text-[#B42318]"}`}
+          className={`mb-3 flex items-center gap-3 text-[13px] ${message.type === "ok" ? "text-[#1E7145]" : "text-[#B42318]"}`}
         >
-          {message.text}
+          <span>{message.text}</span>
+          {lastSavedTag && (
+            <button
+              type="button"
+              onClick={() => printTag(lastSavedTag)}
+              className="rounded-md border border-[#1F3864] px-3 py-1 text-[12px] font-medium text-[#1F3864]"
+            >
+              Print tag {lastSavedTag.barcode}
+            </button>
+          )}
         </div>
       )}
 
       {mode && (
         <form onSubmit={handleSave} className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Item name
-            </label>
+            <label className={labelCls}>Category</label>
+            <select
+              value={fields.categoryId}
+              onChange={(e) => updateField("categoryId", e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— Select —</option>
+              {activeCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelCls}>Item name</label>
             <input
               value={fields.itemName}
               onChange={(e) => updateField("itemName", e.target.value)}
               placeholder="e.g. Ring, Chain"
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              HUID
-            </label>
+            <label className={labelCls}>HUID</label>
             <input
               value={fields.huid}
               onChange={(e) => updateField("huid", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Purity
-            </label>
+            <label className={labelCls}>Purity</label>
             <select
               value={fields.purity}
               onChange={(e) => updateField("purity", e.target.value as Purity)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              className={inputCls}
             >
               {PURITIES.map((p) => (
                 <option key={p} value={p}>
@@ -263,122 +345,140 @@ export default function ItemForm({
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Gross weight (g)
-            </label>
+            <label className={labelCls}>Gross weight (g)</label>
             <input
               type="number"
               step="0.001"
               min="0"
               value={fields.grossWeight}
               onChange={(e) => updateField("grossWeight", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Net weight (g)
-            </label>
+            <label className={labelCls}>Net weight (g)</label>
             <input
               type="number"
               step="0.001"
               min="0"
               value={fields.netWeight}
               onChange={(e) => updateField("netWeight", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              className={inputCls}
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Stone weight (g)
-            </label>
-            <input
-              type="number"
-              step="0.001"
-              min="0"
-              value={fields.stoneWeight}
-              onChange={(e) => updateField("stoneWeight", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Stone charges (₹)
-            </label>
+            <label className={labelCls}>Making charge (₹ per gram)</label>
             <input
               type="number"
               step="0.01"
               min="0"
-              value={fields.stoneCharges}
-              onChange={(e) => updateField("stoneCharges", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              value={fields.makingChargePerGram}
+              onChange={(e) => updateField("makingChargePerGram", e.target.value)}
+              placeholder="₹ per gram"
+              className={inputCls}
             />
           </div>
 
+          {/* ---- Stone section: fields only appear when Stone = Yes ---- */}
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Wastage (%)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={fields.wastagePct}
-              onChange={(e) => updateField("wastagePct", e.target.value)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Making charge type
-            </label>
+            <label className={labelCls}>Stone</label>
             <select
-              value={fields.makingChargeType}
-              onChange={(e) => updateField("makingChargeType", e.target.value as MakingChargeType)}
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+              value={fields.hasStone ? "yes" : "no"}
+              onChange={(e) => updateField("hasStone", e.target.value === "yes")}
+              className={inputCls}
             >
-              {MAKING_CHARGE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
             </select>
           </div>
 
+          {fields.hasStone && (
+            <>
+              <div>
+                <label className={labelCls}>Stone type</label>
+                <input
+                  value={fields.stoneType}
+                  onChange={(e) => updateField("stoneType", e.target.value)}
+                  placeholder="e.g. Diamond, Ruby"
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Stone pieces</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={fields.stonePieces}
+                  onChange={(e) => updateField("stonePieces", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Stone weight (g)</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={fields.stoneWeight}
+                  onChange={(e) => updateField("stoneWeight", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Stone charges (₹)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={fields.stoneCharges}
+                  onChange={(e) => updateField("stoneCharges", e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </>
+          )}
+
+          {/* ---- Polish section: % only appears when Polish = Yes ---- */}
           <div>
-            <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-              Making charge value
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={fields.makingChargeValue}
-              onChange={(e) => updateField("makingChargeValue", e.target.value)}
-              placeholder={
-                fields.makingChargeType === "percentage"
-                  ? "e.g. 12 (%)"
-                  : fields.makingChargeType === "per_gram"
-                    ? "₹ per gram"
-                    : "₹ flat"
-              }
-              className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
-            />
+            <label className={labelCls}>Polish</label>
+            <select
+              value={fields.hasPolish ? "yes" : "no"}
+              onChange={(e) => updateField("hasPolish", e.target.value === "yes")}
+              className={inputCls}
+            >
+              <option value="no">Without polish</option>
+              <option value="yes">With polish</option>
+            </select>
           </div>
+
+          {fields.hasPolish && (
+            <div>
+              <label className={labelCls}>Polish (%)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={fields.polishPct}
+                onChange={(e) => updateField("polishPct", e.target.value)}
+                placeholder="e.g. 8"
+                className={inputCls}
+              />
+            </div>
+          )}
 
           {mode === "edit" && (
             <div>
-              <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#5B6472]">
-                Status
-              </label>
+              <label className={labelCls}>Status</label>
               <select
                 value={fields.status}
                 onChange={(e) => updateField("status", e.target.value as ItemStatus)}
-                className="w-full rounded-md border border-[#D9DCE1] px-3 py-2 text-[14px] outline-none focus:border-[#1F3864]"
+                className={inputCls}
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
