@@ -21,6 +21,12 @@ export default function InventoryPage() {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [canEdit, setCanEdit] = useState(false);
 
+  // Which item the "Edit" button on a table row is pointing at, plus a
+  // nonce that forces ItemForm to remount (via its `key`) each time a new
+  // Edit is clicked - see ItemForm.tsx's presetItem comment for why.
+  const [editingItem, setEditingItem] = useState<ItemRow | null>(null);
+  const [editNonce, setEditNonce] = useState(0);
+
   const [rates, setRates] = useState<CurrentRateRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -125,7 +131,13 @@ export default function InventoryPage() {
         {error && <div className="px-4 py-4 text-[13px] text-danger-text">{error}</div>}
 
         {!loading && canEdit && userEmail && (
-          <ItemForm userEmail={userEmail} categories={categories} onSaved={loadItems} />
+          <ItemForm
+            key={editNonce}
+            userEmail={userEmail}
+            categories={categories}
+            presetItem={editingItem}
+            onSaved={loadItems}
+          />
         )}
 
         {!loading && !canEdit && (
@@ -143,6 +155,11 @@ export default function InventoryPage() {
             canEdit={canEdit}
             userRole={userRole}
             onDeleted={loadItems}
+            onEdit={(item) => {
+              setEditingItem(item);
+              setEditNonce((n) => n + 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           />
         )}
       </main>

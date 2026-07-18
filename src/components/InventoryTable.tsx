@@ -21,6 +21,7 @@ export default function InventoryTable({
   canEdit,
   userRole,
   onDeleted,
+  onEdit,
 }: {
   items: ItemRow[];
   rates: CurrentRateRow[];
@@ -28,6 +29,7 @@ export default function InventoryTable({
   canEdit: boolean;
   userRole: UserRole | null;
   onDeleted: () => void;
+  onEdit: (item: ItemRow) => void;
 }) {
   const supabase = createClient();
   const isAdmin = userRole === "admin";
@@ -82,6 +84,7 @@ export default function InventoryTable({
               <th className="px-4 py-3">Selling price</th>
               <th className="px-4 py-3">Updated</th>
               {canEdit && <th className="px-4 py-3">Tag</th>}
+              {canEdit && <th className="px-4 py-3">Edit</th>}
               {isAdmin && <th className="px-4 py-3"></th>}
             </tr>
           </thead>
@@ -126,6 +129,17 @@ export default function InventoryTable({
                         className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-muted hover:border-primary hover:text-primary-text"
                       >
                         Print
+                      </button>
+                    </td>
+                  )}
+                  {canEdit && (
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(item)}
+                        className="rounded-md border border-primary px-2 py-1 text-[11px] font-medium text-primary-text hover:bg-primary hover:text-white"
+                      >
+                        Edit
                       </button>
                     </td>
                   )}
