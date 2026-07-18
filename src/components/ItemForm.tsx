@@ -23,6 +23,8 @@ const BLANK_FIELDS = {
   hasPolish: false,
   polishPct: "",
   makingChargePerGram: "",
+  hsnCode: "",
+  sacCode: "",
   status: "in_stock" as ItemStatus,
 };
 
@@ -44,6 +46,8 @@ function mapItemToFields(item: ItemRow): typeof BLANK_FIELDS {
     hasPolish: item.has_polish,
     polishPct: item.polish_pct?.toString() ?? "",
     makingChargePerGram: item.making_charge_per_gram?.toString() ?? "",
+    hsnCode: item.hsn_code ?? "",
+    sacCode: item.sac_code ?? "",
     status: item.status,
   };
 }
@@ -193,6 +197,8 @@ export default function ItemForm({
       has_polish: fields.hasPolish,
       polish_pct: fields.hasPolish && fields.polishPct ? Number(fields.polishPct) : null,
       making_charge_per_gram: fields.makingChargePerGram ? Number(fields.makingChargePerGram) : null,
+      hsn_code: fields.hsnCode || null,
+      sac_code: fields.sacCode || null,
       status: fields.status,
       updated_at: now,
       updated_by: userEmail,
@@ -390,6 +396,26 @@ export default function ItemForm({
               value={fields.makingChargePerGram}
               onChange={(e) => updateField("makingChargePerGram", e.target.value)}
               placeholder="₹ per gram"
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>HSN code</label>
+            <input
+              value={fields.hsnCode}
+              onChange={(e) => updateField("hsnCode", e.target.value)}
+              placeholder="e.g. 7113 (material)"
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>SAC code</label>
+            <input
+              value={fields.sacCode}
+              onChange={(e) => updateField("sacCode", e.target.value)}
+              placeholder="e.g. 998892 (making charge)"
               className={inputCls}
             />
           </div>
