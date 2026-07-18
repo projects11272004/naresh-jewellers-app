@@ -125,6 +125,64 @@ export interface CustomerRow {
   updated_by: string | null;
 }
 
+export type PaymentMethod = "Cash" | "Card" | "UPI" | "Cheque" | "Other";
+
+export interface PaymentLine {
+  method: PaymentMethod;
+  amount: number;
+}
+
+export type InvoiceStatus = "completed" | "void";
+
+export interface InvoiceRow {
+  id: number;
+  invoice_number: string; // e.g. NJ/2026-27/00001
+  financial_year: string;
+  sequence_in_year: number;
+  customer_id: number;
+  customer_state_at_billing: string | null;
+  is_interstate: boolean;
+  subtotal: number;
+  total_discount: number;
+  total_sgst: number;
+  total_cgst: number;
+  grand_total: number;
+  payments: PaymentLine[];
+  status: InvoiceStatus;
+  void_reason: string | null;
+  voided_by: string | null;
+  voided_at: string | null;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface InvoiceItemRow {
+  id: number;
+  invoice_id: number;
+  item_id: number | null;
+  barcode: string;
+  description: string | null;
+  hsn_code: string | null;
+  sac_code: string | null;
+  purity: string | null;
+  net_weight: number | null;
+  billing_weight: number | null;
+  rate_per_gram: number;
+  gold_value: number;
+  stone_charges: number;
+  making_charge_amount: number;
+  material_discount: number;
+  stone_discount: number;
+  labour_discount: number;
+  material_taxable_amount: number;
+  labour_taxable_amount: number;
+  material_sgst: number;
+  material_cgst: number;
+  labour_sgst: number;
+  labour_cgst: number;
+  line_total: number;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -137,11 +195,15 @@ export interface Database {
       items: { Row: ItemRow; Insert: Partial<ItemRow>; Update: Partial<ItemRow>; Relationships: []; };
       stock_log: { Row: StockLogRow; Insert: Partial<StockLogRow>; Update: Partial<StockLogRow>; Relationships: []; };
       customers: { Row: CustomerRow; Insert: Partial<CustomerRow>; Update: Partial<CustomerRow>; Relationships: []; };
+      invoices: { Row: InvoiceRow; Insert: Partial<InvoiceRow>; Update: Partial<InvoiceRow>; Relationships: []; };
+      invoice_items: { Row: InvoiceItemRow; Insert: Partial<InvoiceItemRow>; Update: Partial<InvoiceItemRow>; Relationships: []; };
     };
     Views: Record<string, never>;
     Functions: {
       has_permission: { Args: { check_permission: string }; Returns: boolean; };
       generate_item_code: { Args: Record<string, never>; Returns: string; };
+      finalize_invoice: { Args: Record<string, never>; Returns: string; };
+      void_invoice: { Args: Record<string, never>; Returns: undefined; };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

@@ -15,6 +15,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/inventory", label: "Inventory" },
   { href: "/categories", label: "Categories" },
   { href: "/customers", label: "Customers" },
+  { href: "/billing", label: "Billing" },
+  { href: "/invoices", label: "Invoices" },
   { href: "/team", label: "Team & Access", adminOnly: true },
 ];
 
@@ -25,7 +27,7 @@ export default function AppNav({ role }: { role: UserRole | null }) {
   if (items.length <= 1) return null;
 
   return (
-    <nav className="flex gap-1 border-b border-divider bg-surface px-8">
+    <nav className="flex flex-wrap gap-1 border-b border-divider bg-surface px-8">
       {items.map((item) => {
         const active = pathname === item.href;
         return (
